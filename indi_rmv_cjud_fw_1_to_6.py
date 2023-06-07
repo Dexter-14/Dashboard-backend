@@ -49,6 +49,7 @@ with open("/tmp/users_{}.txt".format(DIRECTOR), "r") as f:
 
         ALL_FW_BUGS = "{}/fw_{}.txt".format(BASE_DIR, line)
         FW_QUERY1 = "Fwd.*__2208.*__{}|Fwd.*__2209.*__{}|Fwd.*__2210.*__{}|Fwd.*__2211.*__{}|Fwd.*__2212.*__{}|Fwd.*__2301.*__{}|Fwd.*__2202.*__{}".format(line, line, line, line, line, line, line)
+        print(FW_QUERY1)
 
         os.system("/usr/cisco/bin/query.pl '{}' >> '{}'".format(FW_QUERY1, ALL_FW_BUGS))
         fw_count = sum(1 for _ in open(ALL_FW_BUGS))
