@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 import os
 import subprocess
 import sys
@@ -25,7 +23,7 @@ os.makedirs(BASE_DIR, exist_ok=True)
 FW_QUERY = ""
 FW_QUERY1 = ""
 
-subprocess.run(["/ws/anbv-bgl/productivity/defect_metrics/underling_new.pl", "-l", DIRECTOR], stdout=open("/tmp/users_loc_{}.txt".format(DIRECTOR), "w"))
+subprocess.call(["/ws/anbv-bgl/productivity/defect_metrics/underling_new.pl", "-l", DIRECTOR], stdout=open("/tmp/users_loc_{}.txt".format(DIRECTOR), "w"))
 
 input_file = "/tmp/users_loc_{}.txt".format(DIRECTOR)
 
@@ -38,7 +36,7 @@ with open(input_file, "r") as file:
         # RMV_Query = "Engineer:{} and Status:R,M,V{{220801:}} and Project:CSC.labtrunk,CSC.sys and Status:R,M,V minus Status:R,M,V{{:220731}}".format(line)
         # print(RMV_Query)
 
-        # subprocess.run(["/usr/cisco/bin/query.pl", RMV_Query], stdout=open(RMV123_BUGS, "a"))
+        # subprocess.call(["/usr/cisco/bin/query.pl", RMV_Query], stdout=open(RMV123_BUGS, "a"))
 
         for bug_id in sys.stdin:
             bug_id = bug_id.strip()
@@ -49,8 +47,8 @@ with open(input_file, "r") as file:
             loc_count_mod = 0
 
             print("BUG ID -", bug_id)
-            output = subprocess.run(["/usr/cisco/bin/dumpcr", "-e", "-a", "polaris_dev-code_reviews", bug_id], capture_output=True, text=True)
-            lines = output.stdout.splitlines()
+            output = subprocess.check_output(["/usr/cisco/bin/dumpcr", "-e", "-a", "polaris_dev-code_reviews", bug_id])
+            lines = output.decode("utf-8").splitlines()
 
             for cr_line in lines:
                 if "LoC:" in cr_line:
@@ -60,8 +58,8 @@ with open(input_file, "r") as file:
             if loc_count == 0:
                 print("There is No LoC attachment")
 
-                output = subprocess.run(["/usr/cisco/bin/dumpcr", "-t", bug_id], capture_output=True, text=True)
-                diffs_lines = output.stdout.splitlines()
+                output = subprocess.check_output(["/usr/cisco/bin/dumpcr", "-t", bug_id])
+                diffs_lines = output.decode("utf-8").splitlines()
 
                 comp_commit_file_name = None
                 non_polaris_commit_file_name = None
@@ -78,12 +76,13 @@ with open(input_file, "r") as file:
                     print("This is NOT a Component Commit")
 
                     if non_polaris_commit_file_name is not None:
-                        print("No Loc attachment and hence taking from NON Polaris diffs ::", non_polaris_commit_file_name)
-                        output = subprocess.run(["/usr/cisco/bin/dumpcr", "-e", "-a", non_polaris_commit_file_name, bug_id], capture_output=True, text=True)
-                        diff_lines = output.stdout.splitlines()
+                        print("No Loc attachment and hence taking from NON Polaris diffs:", non_polaris_commit_file_name)
+                        output = subprocess.check_output(["/usr/cisco/bin/dumpcr", "-e", "-a", non_polaris_commit_file_name, bug_id])
+                        diff_lines = output.decode("utf-8").splitlines()
 
                         loc_count_add = sum([1 for diff_line in diff_lines if diff_line.startswith("+ ")])
                         loc_count_mod = sum([1 for diff_line in diff_lines if diff_line.startswith("- ")])
+
                         engineer_total += loc_count_add + loc_count_mod
                         with open("{}/{}_{}.txt".format(BASE_DIR, line, bug_id), "a") as bug_file:
                             bug_file.write("{}|{}|{}\n".format(line, loc_count_add, loc_count_mod))
@@ -92,11 +91,12 @@ with open(input_file, "r") as file:
                     print("This is IS a Component Commit")
 
                     print("No Loc attachment and hence taking from diffs")
-                    output = subprocess.run(["/usr/cisco/bin/dumpcr", "-e", "-a", comp_commit_file_name, bug_id], capture_output=True, text=True)
-                    diff_lines = output.stdout.splitlines()
+                    output = subprocess.check_output(["/usr/cisco/bin/dumpcr", "-e", "-a", comp_commit_file_name, bug_id])
+                    diff_lines = output.decode("utf-8").splitlines()
 
                     loc_count_add = sum([1 for diff_line in diff_lines if diff_line.startswith("+ ")])
                     loc_count_mod = sum([1 for diff_line in diff_lines if diff_line.startswith("- ")])
+
                     engineer_total += loc_count_add + loc_count_mod
                     with open("{}/{}_{}.txt".format(BASE_DIR, line, bug_id), "a") as bug_file:
                         bug_file.write("{}|{}|{}\n".format(line, loc_count_add, loc_count_mod))
@@ -110,7 +110,7 @@ with open(input_file, "r") as file:
 
             print("The TOTAL LOC:", engineer_total)
 
-        print("For Engineer {}, the Total LoC: {}".format(line, engineer_total))
+        print("For Enginer", line, "the Total LoC:", engineer_total)
         with open(ALL_BUGS, "a") as all_bugs_file:
             all_bugs_file.write("{}|{}\n".format(line, engineer_total))
 
